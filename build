@@ -1,0 +1,2 @@
+/home/teffx/cc65/bin/cl65 -t c64 -g -Oi main.c irq.s
+x64 main
