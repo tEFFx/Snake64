@@ -1,7 +1,8 @@
 #include "defines.h"
-#include "irq.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include <6502.h>
+
 unsigned char stackTemp[STACK_SIZE];
 unsigned char speed = 3;
 unsigned char colorSpeed = 4;
@@ -13,6 +14,10 @@ unsigned char stackPos = 0;
 unsigned char dir = 254;
 unsigned char* screenOffset;
 unsigned char color = 2;
+
+struct regs jmp;
+
+extern void music();
 
 void clearScreen(void){
 	unsigned char i = 0;
@@ -31,6 +36,7 @@ void clearScreen(void){
 
 unsigned char gameLoop(void){
 	__asm__("dec $D019");
+	_sys(&jmp);
 	
 	if(PEEK(JOYSTICK) < 127){
 		dir = PEEK(JOYSTICK);
@@ -90,10 +96,20 @@ unsigned char gameLoop(void){
 	return (IRQ_HANDLED);
 }
 
+unsigned int addr;
+char str[20];
 int main (void){	
+	unsigned char i = 0;
+	for(; i < 255; i++){}
+	i = 0;	
+	
 	//POKE(BG_COLOR, 0);
 	//POKE(BORDER_COLOR, 0);
-	
+	jmp.pc = 0x1103;
+	//jmp.pc = 0x1D89;
+	_sys(&jmp);
+	jmp.pc = (void*)music;
+	//jmp.pc = 0x1DDA;
 	clearScreen();
 	
 	SEI();
@@ -107,5 +123,5 @@ int main (void){
 	
 	while(1);
 	
-	//return EXIT_SUCCESS;
+	return EXIT_SUCCESS;
 }
