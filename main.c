@@ -8,7 +8,7 @@
 
 unsigned char stackTemp[STACK_SIZE];
 unsigned char speed = 3;
-unsigned char colorSpeed = 4;
+unsigned char shakeSpeed = 4;
 unsigned char delayCounter = 0;
 unsigned char xPos[256];
 unsigned char yPos[256];
@@ -20,6 +20,7 @@ unsigned char dir = 254;
 unsigned char* screenOffset;
 unsigned char color = 2;
 unsigned char currentChar;
+unsigned char shakeFrames;
 
 struct regs jmp;
 
@@ -56,6 +57,29 @@ void spawnFood(){
 unsigned char gameLoop(void){
 	__asm__("dec $D019");
 	_sys(&jmp);
+	
+		
+	if((delayCounter % shakeSpeed) == 0){
+		if(shakeFrames > 1){
+			--shakeFrames;
+			if(shakeFrames < 2){
+				POKE(BG_COLOR, 6);
+				POKE(BORDER_COLOR, 14);
+				POKE(0xD011, PEEK(0xD011) & 248);
+				POKE(0xD016, PEEK(0xD016) & 248);
+			}else{		
+				color++;
+				if(color > 15){
+					color = 1;
+				}
+				
+				POKE(BG_COLOR, color);
+				POKE(BORDER_COLOR, 16 - color);
+				POKE(0xD011, (PEEK(0xD011) & 248) + (rand() % 7));
+				POKE(0xD016, (PEEK(0xD016) & 248) + (rand() % 7));
+			}
+		}
+	}
 	
 	if(PEEK(JOYSTICK) < 127){
 		dir = PEEK(JOYSTICK);
@@ -101,25 +125,18 @@ unsigned char gameLoop(void){
 		if(currentChar == FOOD){
 			length++;
 			spawnFood();
+			shakeFrames = 6;
 		}
 		if(currentChar == SNAKE){
 			clearScreen();
 			respawn();
 			spawnFood();
+			shakeFrames = 12;
 		}else{
 			POKE(SCREEN_RAM + screenOffset, SNAKE);
 			POKE(COLOR_RAM + screenOffset, 0x05);
 		}
 	}
-	
-	/*if((delayCounter % colorSpeed) == 0){
-		color++;
-		if(color > 15){
-			color = 1;
-		}
-		
-		POKE(BG_COLOR, color);
-	}*/
 			
 	++delayCounter;
 	
