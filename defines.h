@@ -1,6 +1,7 @@
 #define POKE(addr,val) 	(*(unsigned char*) (addr) = (val))
 #define PEEK(addr)		(*(unsigned char*) (addr))
 #define JSR(addr)		(__asm__("jsr %v", addr))
+#define SCROFF(x,y)     (y * 40 + x)
 
 #define BG_COLOR		0xD021
 #define BORDER_COLOR	0xD020

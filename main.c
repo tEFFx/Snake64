@@ -3,17 +3,23 @@
 #include <stdlib.h>
 #include <6502.h>
 
+#define FOOD 0x66
+#define SNAKE 0xE0
+
 unsigned char stackTemp[STACK_SIZE];
 unsigned char speed = 3;
 unsigned char colorSpeed = 4;
 unsigned char delayCounter = 0;
 unsigned char xPos[256];
 unsigned char yPos[256];
-unsigned char length = 20;
+unsigned char xFood;
+unsigned char yFood;
+unsigned char length;
 unsigned char stackPos = 0;
 unsigned char dir = 254;
 unsigned char* screenOffset;
 unsigned char color = 2;
+unsigned char currentChar;
 
 struct regs jmp;
 
@@ -36,8 +42,15 @@ void clearScreen(void){
 }
 
 void respawn(){
-	xPos[stackPos] = rand() % 40;
-	yPos[stackPos] = rand() % 25;
+	length = 5;
+	xPos[stackPos] = rand() % 39;
+	yPos[stackPos] = rand() % 24;
+}
+
+void spawnFood(){
+	xFood = rand() % 39;
+	yFood = rand() % 24;
+	POKE(SCREEN_RAM + SCROFF(xFood, yFood), FOOD);
 }
 
 unsigned char gameLoop(void){
@@ -51,7 +64,9 @@ unsigned char gameLoop(void){
 	if((delayCounter % speed) == 0){
 		unsigned char pos = stackPos - length;
 		screenOffset = yPos[pos] * 40 + xPos[pos];
-		POKE(SCREEN_RAM + screenOffset, 0x20);
+		if(PEEK(SCREEN_RAM + screenOffset) == SNAKE){
+			POKE(SCREEN_RAM + screenOffset, 0x20);
+		}
 		
 		pos = stackPos + 1;
 		xPos[pos] = xPos[stackPos];
@@ -82,11 +97,17 @@ unsigned char gameLoop(void){
 		}
 		
 		screenOffset = yPos[stackPos] * 40 + xPos[stackPos];
-		if(PEEK(SCREEN_RAM + screenOffset) == 0xE0){
+		currentChar = PEEK(SCREEN_RAM + screenOffset);
+		if(currentChar == FOOD){
+			length++;
+			spawnFood();
+		}
+		if(currentChar == SNAKE){
 			clearScreen();
 			respawn();
+			spawnFood();
 		}else{
-			POKE(SCREEN_RAM + screenOffset, 0xE0);
+			POKE(SCREEN_RAM + screenOffset, SNAKE);
 			POKE(COLOR_RAM + screenOffset, 0x05);
 		}
 	}
@@ -117,6 +138,7 @@ int main (void){
 	
 	srand(PEEK(0xD012));
 	clearScreen();
+	spawnFood();
 	respawn();
 	
 	SEI();
