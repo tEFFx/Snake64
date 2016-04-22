@@ -1,2 +1,2 @@
-/home/teffx/cc65/bin/cl65 -t c64 -g -Oi main.c irq.s
+../cc65/bin/cl65 -t c64 -C build.cfg -g -Oi main.c data.s
 x64 main

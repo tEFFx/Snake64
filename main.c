@@ -9,7 +9,7 @@ unsigned char colorSpeed = 4;
 unsigned char delayCounter = 0;
 unsigned char xPos[256];
 unsigned char yPos[256];
-unsigned char length = 10;
+unsigned char length = 20;
 unsigned char stackPos = 0;
 unsigned char dir = 254;
 unsigned char* screenOffset;
@@ -19,6 +19,7 @@ struct regs jmp;
 
 extern void music();
 
+/*too slow, need asm pls*/
 void clearScreen(void){
 	unsigned char i = 0;
 	for(; i < 255; i = i + 1){
@@ -32,6 +33,11 @@ void clearScreen(void){
 		POKE(COLOR_RAM + 0x0200 + i, 0x00);
 		POKE(COLOR_RAM + 0x02E8 + i, 0x00);
 	}
+}
+
+void respawn(){
+	xPos[stackPos] = rand() % 40;
+	yPos[stackPos] = rand() % 25;
 }
 
 unsigned char gameLoop(void){
@@ -75,11 +81,14 @@ unsigned char gameLoop(void){
 			xPos[stackPos] = 39;
 		}
 		
-							
 		screenOffset = yPos[stackPos] * 40 + xPos[stackPos];
-		POKE(SCREEN_RAM + screenOffset, 0xE0);
-		POKE(COLOR_RAM + screenOffset, 0x05);
-
+		if(PEEK(SCREEN_RAM + screenOffset) == 0xE0){
+			clearScreen();
+			respawn();
+		}else{
+			POKE(SCREEN_RAM + screenOffset, 0xE0);
+			POKE(COLOR_RAM + screenOffset, 0x05);
+		}
 	}
 	
 	/*if((delayCounter % colorSpeed) == 0){
@@ -100,17 +109,15 @@ unsigned int addr;
 char str[20];
 int main (void){	
 	unsigned char i = 0;
-	for(; i < 255; i++){}
-	i = 0;	
+	for(; i < 255; i++){}	/*needed for music for some reason*/
 	
-	//POKE(BG_COLOR, 0);
-	//POKE(BORDER_COLOR, 0);
 	jmp.pc = 0x1103;
-	//jmp.pc = 0x1D89;
 	_sys(&jmp);
 	jmp.pc = (void*)music;
-	//jmp.pc = 0x1DDA;
+	
+	srand(PEEK(0xD012));
 	clearScreen();
+	respawn();
 	
 	SEI();
 	POKE(0xDC0D, 0x7F);
